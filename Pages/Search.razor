@@ -4,6 +4,7 @@
 @using System.Net.Http.Json;
 @using System.Web;
 @inject NavigationManager Navigation
+@inject IAppSettingsService AppSettingsService
 
 @if (!string.IsNullOrEmpty(SearchTerm))
 {
@@ -13,7 +14,7 @@
 @if (Notices?.Any() == false)
 {
     <p class="alert alert-danger m-3">
-        No se encontraron noticias. <a class="alert-link" href="/">Volver a la página principal</a>
+        No se encontraron noticias. <a class="alert-link" href="@($"{AppSettingsService.Settings?.BaseFront}/")">Volver a la página principal</a>
     </p>
 }
 else
@@ -21,10 +22,10 @@ else
     <div class="text-center notice-container pt-5">
         @foreach (var notice in Notices)
         {
-            <a href="/@notice.Id" class="notice-link">
+            <a href="@($"{AppSettingsService.Settings?.BaseFront}/{notice.Id}")" class="notice-link">
                 <article class="notice">
                     <div class="img-notice-container rounded-2">
-                        <img class="img-fluid w-100 rounded-2" src="@notice.Img" alt="@notice.Title" />
+                        <img class="img-fluid w-100 rounded-2" src="@($"{AppSettingsService.Settings?.EnFocoBACK}/{notice.Img}")" alt="@notice.Title" />
                     </div>
                     <div class="@GetNoticeClass((Models.NoticeCategory)notice.Category) w-75 rounded-2">
                         <h5 class="text-naranja">@notice.Issue?.ToUpper()</h5>
@@ -94,7 +95,7 @@ else
 
     private void NavigateToHome()
     {
-        NavigationManager.NavigateTo("/");
+        Navigation.NavigateTo($"{AppSettingsService.Settings?.BaseFront}/", forceLoad: true);
     }
 
     protected async Task BuscarAsync()

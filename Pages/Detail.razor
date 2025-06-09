@@ -135,10 +135,10 @@
 @code{
     [Parameter] public int Id { get; set; }
 
-        [Inject] private NoticeService NoticeService { get; set; } = default!;
+        [Inject] private INoticeService NoticeService { get; set; } = default!;
         [Inject] private NavigationManager NavigationManager { get; set; } = default!;
-        [Inject] private AuthService? AuthService { get; set; }
-        [Inject] private AuthStateService? AuthStateService { get; set; }
+        [Inject] private IAuthService? AuthService { get; set; }
+        [Inject] private IAuthStateService? AuthStateService { get; set; }
         [Inject] private IJSRuntime JSRuntime { get; set; } = default!;
 
         private Notice? Notice { get; set; }
