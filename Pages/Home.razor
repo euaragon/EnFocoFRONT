@@ -1,0 +1,208 @@
+﻿@page "/"
+@using EnFocoFRONT.Models
+@using Microsoft.AspNetCore.Components;
+@using Microsoft.AspNetCore.Components.Web;
+@using System.Net.Http.Json;
+@inject IAppSettingsService AppSettingsService
+
+<div class="z-n1 align-content-center d-flex">
+    <img class="banner" src="img/BANNER2.jpg"
+         alt="La Revista Digital de los Organismos de Control Externo de Mendoza" />
+</div>
+
+<div class="d-flex justify-content-end gap-3 align-items-center me-5 mt-3">
+    <label for="categoryFilter">Ver por Organismo de Control</label>
+
+    <select id="categoryFilter" name="category" class="form-select w-25" @onchange="OnCategoryChanged">
+        <option value="">Todas</option>
+        @foreach (var category in Categories)
+        {
+            var categoryValue = category.ToString();
+            var categoryName = category.GetType()
+                .GetMember(category.ToString())[0]
+                .GetCustomAttributes(typeof(System.ComponentModel.DataAnnotations.DisplayAttribute), false)
+                .FirstOrDefault() is System.ComponentModel.DataAnnotations.DisplayAttribute displayAttribute
+                ? displayAttribute.Name
+                : categoryValue;
+
+            <option value="@categoryValue" selected="@((SelectedCategory == categoryValue) ? "selected" : null)">
+                @categoryName
+            </option>
+        }
+    </select>
+</div>
+
+
+@if (isLoading)
+{
+    <div class="d-flex justify-content-center align-items-center my-5">
+        <div class="spinner-border text-primary" role="status">
+            <span class="visually-hidden">Cargando...</span>
+        </div>
+    </div>
+}
+else if (Notices?.Any() == false)
+{
+    <p class="alert alert-danger m-3">
+        No se encontraron noticias. <a class="alert-link" href="/">Volver a la página principal</a>
+    </p>
+}
+else
+{
+    <div class="text-center notice-container pt-5">
+        @foreach (var notice in Notices)
+        {
+            <a href="@($"{AppSettingsService.Settings?.BaseFront}/{notice.Id}")" class="notice-link">
+                <article class="notice">
+                    <div class="img-notice-container rounded-2">
+                        <img class="img-fluid w-100 rounded-2" src="@($"{AppSettingsService.Settings?.EnFocoBACK}/{notice.Img}")"
+                             alt="@notice.Title" />
+                    </div>
+                    <div class="@GetNoticeClass((Models.NoticeCategory)notice.Category) w-75 rounded-2">
+                        <h5 class="text-naranja">@notice.Issue?.ToUpper()</h5>
+                        <h2 class="editorial">@notice.Title</h2>
+                    </div>
+                </article>
+            </a>
+        }
+    </div>
+
+    @if (TotalPages > 1)
+    {
+        <div class="d-flex justify-content-center mb-5">
+            <nav aria-label="Page navigation">
+                <ul class="pagination">
+                    <li class="page-item @(currentPage == 1 ? "disabled" : "")">
+                        <button type="button" class="page-link" aria-label="Página anterior"
+                                @onclick="() => NavigateToPage(currentPage - 1)">Anterior</button>
+                    </li>
+                    @for (var i = 1; i <= TotalPages; i++)
+                    {
+                        var pageNumber = i;
+                        <li class="page-item @(pageNumber == currentPage ? "active" : "")">
+                            <button class="page-link" type="button" aria-label="Página @pageNumber"
+                                    @onclick="() => NavigateToPage(pageNumber)">@pageNumber</button>
+                        </li>
+                    }
+                    <li class="page-item @(currentPage == TotalPages ? "disabled" : "")">
+                        <button type="button" class="page-link" aria-label="Página siguiente"
+                                @onclick="() => NavigateToPage(currentPage + 1)">Siguiente</button>
+                    </li>
+                </ul>
+            </nav>
+        </div>
+    }
+}
+
+@code {
+    [Inject]
+    protected NavigationManager Navigation { get; set; } = default!;
+
+    [Inject]
+    protected IConfiguration Configuration { get; set; } = default!;
+
+    [Inject]
+    protected HttpClient Http { get; set; } = default!;
+
+    private List<Notice> allNotices = new();
+    protected List<Notice> Notices { get; set; } = new();
+    protected string? SearchTerm { get; set; }
+    protected string? SelectedCategory { get; set; }
+
+    private bool isLoading = true;
+
+
+    protected IEnumerable<NoticeCategory> Categories =>
+    Enum.GetValues(typeof(NoticeCategory)).Cast<NoticeCategory>();
+    protected string? EnFocoBACK { get; set; }
+
+    // Paginación
+    private int pageSize = 5; // Define cuántas noticias mostrar por página
+    protected int currentPage { get; set; } = 1;
+    protected int TotalPages { get; set; }
+
+    protected override async Task OnInitializedAsync()
+    {
+        isLoading = true;
+        await AppSettingsService.LoadAsync();
+        EnFocoBACK = Configuration["EnFocoBACK"];
+        if (string.IsNullOrWhiteSpace(EnFocoBACK))
+        {
+            Console.Error.WriteLine("EnFocoBACK no está configurado correctamente.");
+            isLoading = false;
+            return;
+        }
+
+        await LoadAllNotices();
+        UpdateDisplayedNotices();
+
+        isLoading = false;
+    }
+
+    private async Task LoadAllNotices()
+    {
+        string endpoint = $"{EnFocoBACK}/api/Notice";
+        var result = await Http.GetFromJsonAsync<List<Notice>>(endpoint);
+        if (result != null)
+        {
+            allNotices = result;
+            TotalPages = (int)Math.Ceiling((double)allNotices.Count / pageSize);
+        }
+        else
+        {
+            allNotices = new();
+            TotalPages = 0;
+        }
+    }
+
+    protected void OnCategoryChanged(ChangeEventArgs e)
+    {
+        SelectedCategory = e.Value?.ToString();
+        currentPage = 1; // Resetear la página al cambiar la categoría
+        UpdateDisplayedNotices();
+    }
+
+    protected void NavigateToPage(int page)
+    {
+        Console.WriteLine($"Navegando a la página {page}");
+        if (page >= 1 && page <= TotalPages)
+        {
+            currentPage = page;
+            UpdateDisplayedNotices();
+        }
+    }
+
+    private void UpdateDisplayedNotices()
+    {
+        var filteredNotices = allNotices
+        .Where(n => string.IsNullOrEmpty(SelectedCategory) ||
+        n.Category == (int)Enum.Parse(typeof(NoticeCategory), SelectedCategory, true))
+        .ToList();
+
+        TotalPages = (int)Math.Ceiling((double)filteredNotices.Count / pageSize); // <- Esto es clave
+
+        // Si la página actual está fuera del rango (por ejemplo, al cambiar de categoría)
+        if (currentPage > TotalPages)
+        {
+            currentPage = 1;
+        }
+
+        Notices = filteredNotices
+        .Skip((currentPage - 1) * pageSize)
+        .Take(pageSize)
+        .ToList();
+
+        StateHasChanged();
+    }
+
+    protected string GetNoticeClass(Models.NoticeCategory category)
+    {
+        return category switch
+        {
+            Models.NoticeCategory.tribunal => "title-notice title-notice-tribunal",
+            Models.NoticeCategory.etica => "title-notice title-notice-etica",
+            Models.NoticeCategory.fiscalia => "title-notice title-notice-fiscalia",
+            _ => "title-notice"
+        };
+    }
+}

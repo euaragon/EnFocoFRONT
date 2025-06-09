@@ -1,0 +1,124 @@
+@page "/editorial"
+@using EnFocoFRONT.Models;
+@using Microsoft.AspNetCore.Components;
+@using Microsoft.Extensions.Configuration;
+@using System.Net.Http;
+@using System.Net.Http.Json;
+@using System.Linq;
+@inject IAppSettingsService AppSettingsService
+
+<div class="m-0 p-0 z-n1">
+    <img class="banner" src="img/editorial.jpg" alt="Editorial" />
+</div>
+
+
+
+@if (!string.IsNullOrEmpty(SearchTerm))
+{
+    <p class="text-center mt-4">Resultados de la búsqueda: <strong>@SearchTerm</strong></p>
+}
+
+@if (FilteredNotices?.Any() == false)
+{
+    <p class="alert alert-danger m-3">
+        No se encontraron artículos con este filtro. <a class="alert-link" href="/editorial">Ver todo</a>
+    </p>
+}
+else
+{
+    <div class="text-center notice-container pt-5">
+        @foreach (var notice in FilteredNotices)
+        {
+            <a href="@($"{AppSettingsService.Settings?.BaseFront}/{notice.Id}")" class="notice-link">
+                <article class="notice">
+                    <div class="img-notice-container rounded-2">
+                        <img class="img-fluid w-100 rounded-2" src="@($"{Configuration["EnFocoBACK"]}/{notice.Img}")" alt="@notice.Title" />
+                    </div>
+                    <div class="@GetNoticeClass((NoticeCategory)notice.Category) w-75 rounded-2">
+                        <h5 class="text-naranja">@notice.Issue?.ToUpper()</h5>
+                        <h2 class="editorial">@notice.Title</h2>
+                    </div>
+                </article>
+            </a>
+        }
+    </div>
+}
+
+@code{
+    [Inject]
+        protected NavigationManager Navigation { get; set; } = default!;
+
+        [Inject]
+        protected IConfiguration Configuration { get; set; } = default!;
+
+        [Inject]
+        protected HttpClient Http { get; set; } = default!;
+
+        protected List<Notice> AllEditorialNotices { get; set; } = new(); // Cargamos todas las editoriales
+        protected List<Notice> FilteredNotices { get; set; } = new(); // Mostramos las filtradas
+        protected string? SearchTerm { get; set; }
+        protected string? SelectedCategory { get; set; }
+        protected IEnumerable<NoticeCategory> Categories =>
+            Enum.GetValues(typeof(NoticeCategory)).Cast<NoticeCategory>();
+        protected string? EnFocoBACK { get; set; }
+
+        protected override async Task OnInitializedAsync()
+        {
+            EnFocoBACK = Configuration["EnFocoBACK"];
+            if (string.IsNullOrWhiteSpace(EnFocoBACK))
+            {
+                Console.Error.WriteLine("EnFocoBACK no está configurado correctamente.");
+                return;
+            }
+
+            await LoadAllEditorialNotices();
+            FilterNoticesByCategory(); // Filtrar al cargar inicialmente (sin categoría seleccionada)
+        }
+
+        protected async Task LoadAllEditorialNotices()
+        {
+            string endpoint = $"{EnFocoBACK}/api/Notice";
+            var result = await Http.GetFromJsonAsync<List<Notice>>(endpoint);
+            if (result != null)
+            {
+                AllEditorialNotices = result.Where(n => n.Section == 0).ToList();
+                FilteredNotices = AllEditorialNotices; // Inicialmente mostrar todas
+            }
+            else
+            {
+                AllEditorialNotices = new();
+                FilteredNotices = new();
+            }
+        }
+
+        protected void FilterNoticesByCategory()
+        {
+            if (string.IsNullOrEmpty(SelectedCategory))
+            {
+                FilteredNotices = AllEditorialNotices;
+            }
+            else
+            {
+                FilteredNotices = AllEditorialNotices
+                    .Where(n => n.Category == (int)Enum.Parse(typeof(NoticeCategory), SelectedCategory, true))
+                    .ToList();
+            }
+        }
+
+        protected void OnCategoryChanged(ChangeEventArgs e)
+        {
+            SelectedCategory = e.Value?.ToString();
+            FilterNoticesByCategory();
+        }
+
+        protected string GetNoticeClass(NoticeCategory category)
+        {
+            return category switch
+            {
+                NoticeCategory.tribunal => "title-notice title-notice-tribunal",
+                NoticeCategory.etica => "title-notice title-notice-etica",
+                NoticeCategory.fiscalia => "title-notice title-notice-fiscalia",
+                _ => "title-notice"
+            };
+        }
+}

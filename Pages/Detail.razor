@@ -1,0 +1,282 @@
+@page "/{id:int}"
+@inject IConfiguration Configuration
+@using TinyMCE.Blazor
+@using Microsoft.AspNetCore.Components.Forms 
+@using Microsoft.AspNetCore.Components;
+@using Microsoft.AspNetCore.Components.Web;
+@using System.Text.Json;
+@using EnFocoFRONT.Models;
+@using EnFocoFRONT.Services;
+@using Microsoft.JSInterop;
+
+@inject IAppSettingsService AppSettingsService
+@inject NavigationManager Navigation
+
+<div class="row ">
+    <div class="col-md-8 container-fluid pt-5">
+        <button class="btn volver" @onclick="NavigateToHome">
+            <img style="position: relative; top:-1px;" width="24" height="24"
+                src="https://img.icons8.com/material/24/000000/back--v1.png" alt="volver" />VOLVER
+        </button>
+
+        @if (IsUserAuthenticated)
+        {
+            <div class="d-grid gap-2 d-md-flex justify-content-md-end mb-3" id="topButtons">
+                <button class="btn btn-warning btn-sm" @onclick="EnableEdit" hidden="@(IsEditing)">Editar</button>
+                <button class="btn btn-danger btn-sm" @onclick="ConfirmDelete" hidden="@(IsEditing)">Eliminar</button>
+                <button class="btn btn-success btn-sm" @onclick="SaveChanges" hidden="@(!IsEditing)">Guardar</button>
+                <button class="btn btn-secondary btn-sm" @onclick="CancelEdit" hidden="@(!IsEditing)">Cancelar</button>
+            </div>
+        }
+
+        @if (Notice != null)
+        {
+            @if (IsEditing)
+            {
+                <div class="form-group mb-3">
+                    <label for="editableIssue">Edición:</label>
+                    <InputText id="editableIssue" class="form-control" @bind-Value="EditableIssue" />
+                </div>
+            }
+            else
+            {
+                <h5 class="text-naranja notice-detail-issue">@Notice.Issue?.ToUpper()</h5>
+            }
+
+            @if (IsEditing)
+            {
+                <div class="form-group mb-3">
+                    <label for="editableTitle">Título:</label>
+                    <InputText id="editableTitle" class="form-control" @bind-Value="EditableTitle" />
+                </div>
+            }
+            else
+            {
+                <h2 class="notice-detail-title">@Notice.Title</h2>
+            }
+
+            <small>Creado el día @Notice.CreatedAt</small>
+
+            @if (IsEditing)
+            {
+                <div class="form-group mb-3">
+                    <label for="editableSubtitle">Subtítulo:</label>
+                    <InputText id="editableSubtitle" class="form-control" @bind-Value="EditableSubtitle" />
+                </div>
+            }
+            else
+            {
+                <h3 class="notice-detail-subtitle">@Notice.Subtitle</h3>
+            }
+
+
+           
+            <img class="img-fluid img-thumbnail w-100 rounded-5" src="@($"{Configuration["EnFocoBACK"]}/{Notice.Img}")"
+                alt="@Notice.Title">
+
+            <div class="content-notice mt-3 position-relative">
+                @if (IsEditing)
+                {
+                    @* Aquí usamos el componente TinyMCE.Blazor *@
+                    <Editor @bind-Value="EditableText" Id="tinymceEditor"
+                            CloudChannel="6"
+                            ApiKey="gpl" 
+                            Conf="@TinyMceConfig" />
+                }
+                else
+                {
+                    <p class="notice-detail-text">@((MarkupString)Notice.Text)</p>
+                }
+            </div>
+
+            @* Botones en la parte inferior *@
+            @if (IsUserAuthenticated)
+            {
+                <div class="d-grid gap-2 d-md-flex justify-content-md-end mt-3" id="bottomButtons">
+                    <button class="btn btn-warning btn-sm" @onclick="EnableEdit" hidden="@(IsEditing)">Editar</button>
+                    <button class="btn btn-danger btn-sm" @onclick="ConfirmDelete" hidden="@(IsEditing)">Eliminar</button>
+                    <button class="btn btn-success btn-sm" @onclick="SaveChanges" hidden="@(!IsEditing)">Guardar</button>
+                    <button class="btn btn-secondary btn-sm" @onclick="CancelEdit" hidden="@(!IsEditing)">Cancelar</button>
+                </div>
+            }
+
+        }
+        else
+        {
+            <p>Cargando noticia...</p>
+        }
+
+        <button class="btn volver mt-3" @onclick="NavigateToHome">
+            <img style="position: relative; top:-1px;" width="24" height="24"
+                src="https://img.icons8.com/material/24/000000/back--v1.png" alt="volver" />VOLVER
+        </button>
+    </div>
+    
+    <div class="col-md-3 offset-md-0 mt-5 mb-5">
+        <h5 class="pb-3">También te puede interesar...</h5>
+        @if (RelatedNotices != null)
+        {
+            @foreach (var relatedNotice in RelatedNotices.Where(n => n.Id != Id).Take(10))
+            {
+                <a href="@($"{AppSettingsService.Settings?.BaseFront}/{relatedNotice.Id}")" class="list-group-item list-group-item-action p-2">
+                    <span class="list-group-item-text text-naranja">@relatedNotice.Issue</span>
+                    <p class="list-group-item-heading fw-bold">@relatedNotice.Title</p>
+                </a>
+            }
+        }
+        else
+        {
+            <p>Cargando noticias relacionadas...</p>
+        }
+    </div>
+    <div class="mt-5 mb-5"></div>
+</div>
+
+@code{
+    [Parameter] public int Id { get; set; }
+
+        [Inject] private NoticeService NoticeService { get; set; } = default!;
+        [Inject] private NavigationManager NavigationManager { get; set; } = default!;
+        [Inject] private AuthService? AuthService { get; set; }
+        [Inject] private AuthStateService? AuthStateService { get; set; }
+        [Inject] private IJSRuntime JSRuntime { get; set; } = default!;
+
+        private Notice? Notice { get; set; }
+        private List<Notice>? RelatedNotices { get; set; }
+        private bool IsEditing { get; set; } = false;
+
+        // Estas propiedades son para el modo de edición y se enlazarán a los InputText y al TinyMCE Editor
+        private string EditableText { get; set; } = string.Empty;
+        private string EditableTitle { get; set; } = string.Empty;
+        private string EditableSubtitle { get; set; } = string.Empty;
+        private string EditableIssue { get; set; } = string.Empty;
+        private string EditableImage { get; set; } = string.Empty; // Para la imagen, si la editas
+        private int EditableCategory { get; set; }
+        private int EditableSection { get; set; }
+
+        private bool IsUserAuthenticated => AuthStateService?.IsAuthenticated ?? false;
+
+        // Configuración de TinyMCE
+        private Dictionary<string, object> TinyMceConfig = new Dictionary<string, object>
+            {
+                { "plugins", "advlist autolink lists link image charmap print preview anchor searchreplace visualblocks code fullscreen insertdatetime media table paste help wordcount" },
+                { "toolbar", "undo redo | formatselect | bold italic backcolor | " +
+                            "alignleft aligncenter alignright alignjustify | " +
+                            "bullist numlist outdent indent | removeformat | image | help" }, // Añadido 'image' al toolbar
+                { "height", 500 },
+                { "language", "es" },
+                { "images_upload_url", "/api/uploadimage" }, // Reemplaza con la URL de tu endpoint de subida de imágenes
+                { "images_upload_handler", "imageUploadHandler" } // Nombre de la función JavaScript para manejar la subida
+            };
+
+        protected override async Task OnInitializedAsync()
+        {
+            AuthStateService.OnAuthStateChanged += AuthStateChanged;
+            await LoadNotice();
+        }
+
+        protected override async Task OnParametersSetAsync()
+        {
+            await LoadNotice();
+        }
+
+        private void AuthStateChanged()
+        {
+            InvokeAsync(StateHasChanged);
+        }
+
+        private async Task LoadNotice()
+        {
+            Notice = await NoticeService.GetByIdAsync(Id);
+            RelatedNotices = Notice != null
+                ? await NoticeService.GetBySectionAsync(Notice.Section.ToString())
+                : null;
+
+            // Inicializa las propiedades "Editable" cuando se carga la noticia
+            if (Notice != null)
+            {
+                EditableText = Notice.Text;
+                EditableTitle = Notice.Title;
+                EditableSubtitle = Notice.Subtitle;
+                EditableIssue = Notice.Issue;
+                EditableImage = Notice.Img ?? string.Empty;
+                EditableCategory = Notice.Category;
+                EditableSection = Notice.Section;
+            }
+        }
+
+        private void EnableEdit()
+        {
+            // Las propiedades Editable* ya están cargadas en LoadNotice
+            IsEditing = true;
+        }
+
+        private void CancelEdit()
+        {
+            IsEditing = false;
+            // Opcional: recargar la noticia para descartar cualquier cambio no guardado
+            InvokeAsync(LoadNotice);
+        }
+
+        private async Task SaveChanges()
+        {
+            if (Notice is null) return;
+
+            // Asigna los valores editados de vuelta al objeto Notice
+            Notice.Text = EditableText; // TinyMCE.Blazor actualizará EditableText automáticamente
+            Notice.Title = EditableTitle;
+            Notice.Subtitle = EditableSubtitle;
+            Notice.Issue = EditableIssue;
+            Notice.Img = EditableImage;
+            Notice.Category = EditableCategory;
+            Notice.Section = EditableSection;
+
+            var success = await NoticeService.UpdateAsync(Notice.Id, Notice);
+            if (success)
+            {
+                IsEditing = false;
+                await JSRuntime.InvokeVoidAsync("SwalHelper.showSuccess", "Los cambios fueron guardados.");
+                await LoadNotice(); // Recargar para mostrar los cambios guardados
+            }
+            else
+            {
+                await JSRuntime.InvokeVoidAsync("SwalHelper.showError", "No se pudo guardar la noticia.");
+            }
+        }
+
+        private async Task ConfirmDelete()
+        {
+            var result = await JSRuntime.InvokeAsync<object>("SwalHelper.confirmDelete");
+            var json = result?.ToString();
+
+            if (json is not null && json.Contains("isConfirmed"))
+            {
+                using var doc = JsonDocument.Parse(json);
+                var isConfirmed = doc.RootElement.GetProperty("isConfirmed").GetBoolean();
+
+                if (isConfirmed)
+                {
+                    await DeleteNotice();
+                }
+            }
+        }
+
+        private async Task DeleteNotice()
+        {
+            if (Notice is null) return;
+
+            var success = await NoticeService.DeleteAsync(Notice.Id);
+            if (success)
+            {
+                await JSRuntime.InvokeVoidAsync("SwalHelper.showSuccess", "La noticia ha sido eliminada.");
+               Navigation.NavigateTo($"{AppSettingsService.Settings?.BaseFront}/", forceLoad: true);
+            }
+            else
+            {
+                await JSRuntime.InvokeVoidAsync("SwalHelper.showError", "No se pudo eliminar la noticia.");
+            }
+        }
+
+
+        private void NavigateToHome() =>  Navigation.NavigateTo($"{AppSettingsService.Settings?.BaseFront}/", forceLoad: true);
+}

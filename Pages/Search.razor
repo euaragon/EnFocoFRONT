@@ -1,0 +1,131 @@
+@page "/search"
+@using EnFocoFRONT.Models
+@using Microsoft.AspNetCore.Components;
+@using System.Net.Http.Json;
+@using System.Web;
+@inject NavigationManager Navigation
+
+@if (!string.IsNullOrEmpty(SearchTerm))
+{
+    <p class="text-center mt-4">Resultados de la búsqueda: <strong>@SearchTerm</strong></p>
+}
+
+@if (Notices?.Any() == false)
+{
+    <p class="alert alert-danger m-3">
+        No se encontraron noticias. <a class="alert-link" href="/">Volver a la página principal</a>
+    </p>
+}
+else
+{
+    <div class="text-center notice-container pt-5">
+        @foreach (var notice in Notices)
+        {
+            <a href="/@notice.Id" class="notice-link">
+                <article class="notice">
+                    <div class="img-notice-container rounded-2">
+                        <img class="img-fluid w-100 rounded-2" src="@notice.Img" alt="@notice.Title" />
+                    </div>
+                    <div class="@GetNoticeClass((Models.NoticeCategory)notice.Category) w-75 rounded-2">
+                        <h5 class="text-naranja">@notice.Issue?.ToUpper()</h5>
+                        <h2 class="editorial">@notice.Title</h2>
+                    </div>
+                </article>
+            </a>
+        }
+
+
+
+    </div>
+
+
+    @if (TotalPages > 1)
+    {
+        <div class="d-flex justify-content-center">
+            <nav aria-label="Page navigation">
+                <ul class="pagination">
+                    <li class="page-item @(CurrentPage == 1 ? "disabled" : "")">
+                        <button class="page-link" @onclick="() => NavigateToPage(CurrentPage - 1)">Anterior</button>
+                    </li>
+                    @for (var i = 1; i <= TotalPages; i++)
+                    {
+                        <li class="page-item @(i == CurrentPage ? "active" : "")">
+                            <button class="page-link" @onclick="() => NavigateToPage(i)">@i</button>
+                        </li>
+                    }
+                    <li class="page-item @(CurrentPage == TotalPages ? "disabled" : "")">
+                        <button class="page-link" @onclick="() => NavigateToPage(CurrentPage + 1)">Siguiente</button>
+                    </li>
+                </ul>
+            </nav>
+        </div>
+    }
+}
+
+
+<div class="d-flex flex-column">
+    <button class="btn volver" @onclick="NavigateToHome">
+        <img style="position: relative; top:-1px;" width="24" height="24"
+            src="https://img.icons8.com/material/24/000000/back--v1.png" alt="volver" />VOLVER
+    </button>
+</div>
+
+@code {
+    [Inject] private HttpClient? Http { get; set; }
+    [Inject]
+    private NavigationManager NavigationManager { get; set; } = default!;
+    protected string? SearchTerm { get; set; }
+    protected List<Notice> Notices { get; set; } = new();
+    protected int CurrentPage { get; set; } = 1;
+    protected int TotalPages { get; set; }
+
+    protected override async Task OnInitializedAsync()
+    {
+
+        var uri = new Uri(Navigation.Uri);
+        var queryParams = HttpUtility.ParseQueryString(uri.Query);
+        SearchTerm = queryParams.Get("searchTerm") ?? "";
+
+        if (!string.IsNullOrWhiteSpace(SearchTerm))
+        {
+            await BuscarAsync();
+        }
+    }
+
+    private void NavigateToHome()
+    {
+        NavigationManager.NavigateTo("/");
+    }
+
+    protected async Task BuscarAsync()
+    {
+        var response = await
+        Http.GetFromJsonAsync<PagedResult<Notice>>($"EnFocoBACK/api/Notice/search?searchTerm={SearchTerm}&page={CurrentPage}&pageSize=6");
+        if (response != null)
+        {
+            Notices = response.Data;
+            TotalPages = response.TotalPages;
+        }
+    }
+
+    protected async Task NavigateToPage(int page)
+    {
+        if (page >= 1 && page <= TotalPages)
+        {
+            CurrentPage = page;
+            await BuscarAsync();
+        }
+    }
+
+
+    protected string GetNoticeClass(Models.NoticeCategory category)
+    {
+        return category switch
+        {
+            Models.NoticeCategory.tribunal => "title-notice title-notice-tribunal",
+            Models.NoticeCategory.etica => "title-notice title-notice-etica",
+            Models.NoticeCategory.fiscalia => "title-notice title-notice-fiscalia",
+            _ => "title-notice"
+        };
+    }
+}

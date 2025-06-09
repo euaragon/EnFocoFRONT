@@ -1,0 +1,56 @@
+@page "/suscriptores"
+@using EnFocoFRONT.Models
+@using EnFocoFRONT.Services
+@inject INewsletterService NewsletterService
+
+<h1 class="mb-4 text-center">Lista de Suscriptores</h1>
+
+@if (isLoading)
+{
+    <p>Cargando...</p>
+}
+else if (newsletters.Count == 0)
+{
+    <p>No hay suscriptores registrados</p>
+}
+else
+{
+    <table class="table table-borderless">
+        <thead>
+            <tr>
+                <th></th>
+                <th>Email</th>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach (var (item, index) in newsletters.Select((n, i) => (n, i + 1)))
+            {
+                <tr>
+                    <td class="bg-transparent">@index</td>
+                    <td class="bg-transparent">@item.Email</td>
+                </tr>
+            }
+        </tbody>
+    </table>
+}
+
+@code {
+    private List<Newsletter> newsletters = new();
+    private bool isLoading = true;
+
+    protected override async Task OnInitializedAsync()
+    {
+        try
+        {
+            newsletters = await NewsletterService.GetAllAsync();
+        }
+        catch (Exception ex)
+        {
+            Console.Error.WriteLine($"Error al cargar suscriptores: {ex.Message}");
+        }
+        finally
+        {
+            isLoading = false;
+        }
+    }
+}

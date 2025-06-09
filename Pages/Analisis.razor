@@ -1,0 +1,113 @@
+@page "/analisis"
+@using EnFocoFRONT.Models;
+@using Microsoft.AspNetCore.Components;
+@using Microsoft.Extensions.Configuration;
+@using System.Net.Http;
+@using System.Net.Http.Json;
+@using System.Linq;
+@inject IAppSettingsService AppSettingsService
+
+
+<div class="z-n1 align-content-center d-flex">
+    <img class="banner" src="img/analisis.jpg" alt="Análisis" />
+</div>
+
+
+
+@if (!string.IsNullOrEmpty(SearchTerm))
+{
+    <p class="text-center mt-4">Resultados de la búsqueda: <strong>@SearchTerm</strong></p>
+}
+
+@if (Notices?.Any() == false)
+{
+    <p class="alert alert-danger m-3">
+        No se encontraron análisis. <a class="alert-link" href="/">Volver a la página principal</a>
+    </p>
+}
+else
+{
+    <div class="text-center notice-container pt-5">
+        @foreach (var notice in Notices)
+        {
+            <a href="@($"{AppSettingsService.Settings?.BaseFront}/{notice.Id}")" class="notice-link">
+                <article class="notice">
+                    <div class="img-notice-container rounded-2">
+                        <img class="img-fluid w-100 rounded-2"src="@($"{Configuration["EnFocoBACK"]}/{notice.Img}")" alt="@notice.Title" />
+                    </div>
+                    <div class="@GetNoticeClass((NoticeCategory)notice.Category) w-75 rounded-2">
+                        <h5 class="text-naranja">@notice.Issue?.ToUpper()</h5>
+                        <h2 class="editorial">@notice.Title</h2>
+                    </div>
+                </article>
+            </a>
+        }
+    </div>
+}
+
+@code{
+    [Inject]
+        protected NavigationManager Navigation { get; set; } = default!;
+
+        [Inject]
+        protected IConfiguration Configuration { get; set; } = default!;
+
+        [Inject]
+        protected HttpClient Http { get; set; } = default!;
+
+        protected List<Notice> Notices { get; set; } = new();
+        protected string? SearchTerm { get; set; }
+        protected string? SelectedCategory { get; set; }
+        protected IEnumerable<NoticeCategory> Categories =>
+            Enum.GetValues(typeof(NoticeCategory)).Cast<NoticeCategory>();
+        protected string? EnFocoBACK { get; set; }
+
+        protected override async Task OnInitializedAsync()
+        {
+            EnFocoBACK = Configuration["EnFocoBACK"];
+            if (string.IsNullOrWhiteSpace(EnFocoBACK))
+            {
+                Console.Error.WriteLine("EnFocoBACK no está configurado correctamente.");
+                return;
+            }
+
+            await LoadAnalisisNotices();
+        }
+
+        protected async Task LoadAnalisisNotices()
+        {
+            string endpoint = $"{EnFocoBACK}/api/Notice";
+
+            if (!string.IsNullOrEmpty(SelectedCategory))
+            {
+                endpoint = $"{EnFocoBACK}/api/Notice/section/{SelectedCategory}"; // Ajusta el endpoint si tu backend filtra por sección Y categoría
+            }
+
+            var result = await Http.GetFromJsonAsync<List<Notice>>(endpoint);
+            if (result != null)
+            {
+                Notices = result.Where(n => n.Section == 1).ToList(); // Filtrar solo la sección análisis
+            }
+            else
+            {
+                Notices = new();
+            }
+        }
+
+        protected async Task OnCategoryChanged(ChangeEventArgs e)
+        {
+            SelectedCategory = e.Value?.ToString();
+            await LoadAnalisisNotices(); // Recargamos las noticias al cambiar el filtro de organismo
+        }
+
+        protected string GetNoticeClass(NoticeCategory category)
+        {
+            return category switch
+            {
+                NoticeCategory.tribunal => "title-notice title-notice-tribunal",
+                NoticeCategory.etica => "title-notice title-notice-etica",
+                NoticeCategory.fiscalia => "title-notice title-notice-fiscalia",
+                _ => "title-notice"
+            };
+        }
+}
