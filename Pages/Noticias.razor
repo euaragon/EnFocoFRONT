@@ -18,7 +18,7 @@
 @if (FilteredNotices?.Any() == false)
 {
     <p class="alert alert-danger m-3">
-        No se encontraron noticias con este filtro. <a class="alert-link" href="/noticias">Ver todas las noticias</a>
+        No se encontraron noticias con este filtro. <a class="alert-link" href="@($"{AppSettingsService.Settings?.BaseFront}noticias")">Ver todas las noticias</a>
     </p>
 }
 else
@@ -29,7 +29,7 @@ else
             <a href="@($"{AppSettingsService.Settings?.BaseFront}/{notice.Id}")" class="notice-link">
                 <article class="notice">
                     <div class="img-notice-container rounded-2">
-                        <img class="img-fluid w-100 rounded-2" src="@($"{Configuration["EnFocoBACK"]}/{notice.Img}")" alt="@notice.Title" />
+                        <img class="img-fluid w-100 rounded-2" src="@($"{Configuration["EnFocoBACK"]}{notice.Img}")" alt="@notice.Title" />
                     </div>
                     <div class="@GetNoticeClass((NoticeCategory)notice.Category) w-75 rounded-2">
                         <h5 class="text-naranja">@notice.Issue?.ToUpper()</h5>
@@ -74,7 +74,7 @@ else
 
         protected async Task LoadAllNoticias()
         {
-            string endpoint = $"{EnFocoBACK}/api/Notice";
+            string endpoint = $"{EnFocoBACK}api/Notice";
             var result = await Http.GetFromJsonAsync<List<Notice>>(endpoint);
             if (result != null)
             {

@@ -14,7 +14,7 @@
 @if (Notices?.Any() == false)
 {
     <p class="alert alert-danger m-3">
-        No se encontraron noticias. <a class="alert-link" href="@($"{AppSettingsService.Settings?.BaseFront}/")">Volver a la página principal</a>
+        No se encontraron noticias. <a class="alert-link" href="@($"{AppSettingsService.Settings?.BaseFront}")">Volver a la página principal</a>
     </p>
 }
 else
@@ -22,7 +22,7 @@ else
     <div class="text-center notice-container pt-5">
         @foreach (var notice in Notices)
         {
-            <a href="@($"{AppSettingsService.Settings?.BaseFront}/{notice.Id}")" class="notice-link">
+            <a href="@($"{AppSettingsService.Settings?.BaseFront}{notice.Id}")" class="notice-link">
                 <article class="notice">
                     <div class="img-notice-container rounded-2">
                         <img class="img-fluid w-100 rounded-2" src="@($"{AppSettingsService.Settings?.EnFocoBACK}/{notice.Img}")" alt="@notice.Title" />
@@ -95,13 +95,13 @@ else
 
     private void NavigateToHome()
     {
-        Navigation.NavigateTo($"{AppSettingsService.Settings?.BaseFront}/", forceLoad: true);
+        Navigation.NavigateTo($"{AppSettingsService.Settings?.BaseFront}", forceLoad: true);
     }
 
     protected async Task BuscarAsync()
     {
         var response = await
-        Http.GetFromJsonAsync<PagedResult<Notice>>($"EnFocoBACK/api/Notice/search?searchTerm={SearchTerm}&page={CurrentPage}&pageSize=6");
+        Http.GetFromJsonAsync<PagedResult<Notice>>($"api/Notice/search?searchTerm={SearchTerm}&page={CurrentPage}&pageSize=6");
         if (response != null)
         {
             Notices = response.Data;

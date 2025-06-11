@@ -15,14 +15,14 @@ namespace EnFocoFRONT.Services
         // Obtiene una LISTA de suscriptores, espera directamente una List<Newsletter> en la respuesta
         public async Task<List<Newsletter>> GetAllAsync()
         {
-            return await _http.GetFromJsonAsync<List<Newsletter>>("EnFocoBACK/api/Newsletter") ?? new List<Newsletter>();
+            return await _http.GetFromJsonAsync<List<Newsletter>>("api/Newsletter") ?? new List<Newsletter>();
         }
 
 
         // Crea un nuevo suscriptor
         public async Task<bool> CreateAsync(Newsletter newsletter)
         {
-            var response = await _http.PostAsJsonAsync("EnFocoBACK/api/Newsletter", newsletter);
+            var response = await _http.PostAsJsonAsync("api/Newsletter", newsletter);
             return response.IsSuccessStatusCode;
         }
 

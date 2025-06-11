@@ -1,5 +1,7 @@
 @page "/gracias-por-suscribirte"
 @using Microsoft.AspNetCore.Components;
+@inject NavigationManager Navigation
+@inject IAppSettingsService AppSettingsService
 
 <div class="notice-container pt-5 text-center flex-column">
 
@@ -16,6 +18,6 @@
 
         private void NavigateToHome()
         {
-            NavigationManager.NavigateTo("/");
+        Navigation.NavigateTo($"{AppSettingsService.Settings?.BaseFront}", forceLoad: true);
         }
 }

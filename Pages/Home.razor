@@ -44,7 +44,7 @@
 else if (Notices?.Any() == false)
 {
     <p class="alert alert-danger m-3">
-        No se encontraron noticias. <a class="alert-link" href="/">Volver a la página principal</a>
+        No se encontraron noticias. <a class="alert-link" href="@($"{AppSettingsService.Settings?.BaseFront}")">Volver a la página principal</a>
     </p>
 }
 else
@@ -52,10 +52,10 @@ else
     <div class="text-center notice-container pt-5">
         @foreach (var notice in Notices)
         {
-            <a href="@($"{AppSettingsService.Settings?.BaseFront}/{notice.Id}")" class="notice-link">
+            <a href="@($"{AppSettingsService.Settings?.BaseFront}{notice.Id}")" class="notice-link">
                 <article class="notice">
                     <div class="img-notice-container rounded-2">
-                        <img class="img-fluid w-100 rounded-2" src="@($"{AppSettingsService.Settings?.EnFocoBACK}/{notice.Img}")"
+                        <img class="img-fluid w-100 rounded-2" src="@($"{AppSettingsService.Settings?.EnFocoBACK}{notice.Img}")"
                              alt="@notice.Title" />
                     </div>
                     <div class="@GetNoticeClass((Models.NoticeCategory)notice.Category) w-75 rounded-2">
@@ -141,7 +141,7 @@ else
 
     private async Task LoadAllNotices()
     {
-        string endpoint = $"{EnFocoBACK}/api/Notice";
+        string endpoint = $"{EnFocoBACK}api/Notice";
         var result = await Http.GetFromJsonAsync<List<Notice>>(endpoint);
         if (result != null)
         {

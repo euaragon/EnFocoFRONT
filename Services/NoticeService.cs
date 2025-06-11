@@ -42,19 +42,19 @@ namespace EnFocoFRONT.Services
         // Obtiene una LISTA de noticias, espera directamente una List<Notice> en la respuesta
         public async Task<List<Notice>> GetAllAsync()
         {
-            return await _http.GetFromJsonAsync<List<Notice>>("EnFocoBACK/api/Notice") ?? new List<Notice>();
+            return await _http.GetFromJsonAsync<List<Notice>>("api/Notice") ?? new List<Notice>();
         }
 
         // Obtiene una UNICA noticia por ID, espera directamente un objeto Notice en la respuesta
         public async Task<Notice?> GetByIdAsync(int id)
         {
-            return await _http.GetFromJsonAsync<Notice>($"EnFocoBACK/api/Notice/{id}");
+            return await _http.GetFromJsonAsync<Notice>($"api/Notice/{id}");
         }
 
         // Obtiene una LISTA de noticias por sección, espera directamente una List<Notice> en la respuesta
         public async Task<List<Notice>> GetBySectionAsync(string section)
         {
-            return await _http.GetFromJsonAsync<List<Notice>>($"EnFocoBACK/api/Notice/section/{section}") ?? new List<Notice>();
+            return await _http.GetFromJsonAsync<List<Notice>>($"api/Notice/section/{section}") ?? new List<Notice>();
         }
 
         // Busca una LISTA de noticias por término, espera directamente una List<Notice> en la respuesta
@@ -67,7 +67,7 @@ namespace EnFocoFRONT.Services
 
         public async Task<bool> CreateAsync(Notice notice)
         {
-           var request = await CreateRequestAsync(HttpMethod.Post, "EnFocoBACK/api/Notice", notice);
+           var request = await CreateRequestAsync(HttpMethod.Post, "api/Notice", notice);
             var response = await _http.SendAsync(request);
             return response.IsSuccessStatusCode;
         }
@@ -101,7 +101,7 @@ namespace EnFocoFRONT.Services
             }
 
             var token = await _localStorage.GetItemAsync<string>("authToken");
-            var request = new HttpRequestMessage(HttpMethod.Put, $"EnFocoBACK/api/Notice/{id}")
+            var request = new HttpRequestMessage(HttpMethod.Put, $"api/Notice/{id}")
             {
                 Content = content
             };
@@ -122,7 +122,7 @@ namespace EnFocoFRONT.Services
 
         public async Task<bool> DeleteAsync(int id)
         {
-            var request = await CreateRequestAsync(HttpMethod.Delete, $"EnFocoBACK/api/Notice/{id}");
+            var request = await CreateRequestAsync(HttpMethod.Delete, $"api/Notice/{id}");
             var response = await _http.SendAsync(request);
             return response.IsSuccessStatusCode;
         }

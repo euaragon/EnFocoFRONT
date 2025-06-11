@@ -24,16 +24,17 @@ builder.Services.AddScoped(sp => new HttpClient
     BaseAddress = new Uri(baseAddress)
 });
 
-builder.Services.AddBlazoredLocalStorage();
+
+
 
 Console.WriteLine("Registrando servicios...");
 builder.Services.AddScoped<AuthStateService>();
-builder.Services.AddScoped<IAuthStateService, AuthStateService>();
+builder.Services.AddSingleton<IAuthStateService, AuthStateService>();
 builder.Services.AddScoped<IAuthService, AuthService>();
 builder.Services.AddScoped<INoticeService, NoticeService>();
 builder.Services.AddScoped<INewsletterService, NewsletterService>();
 builder.Services.AddScoped<IAppSettingsService, AppSettingsService>();
-Console.WriteLine("Servicios registrados correctamente.");
+builder.Services.AddBlazoredLocalStorage();
 
 var host = builder.Build();
 

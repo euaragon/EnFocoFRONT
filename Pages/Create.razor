@@ -1,4 +1,5 @@
 @page "/crear-noticia"
+
 @using Microsoft.AspNetCore.Components;
 @using Microsoft.AspNetCore.Components.Forms;
 @using Microsoft.AspNetCore.Components.Web;
@@ -8,6 +9,8 @@
 @using EnFocoFRONT.Helpers; 
 @using EnFocoFRONT.Services
 @inject IAppSettingsService AppSettingsService
+@inject IAuthStateService AuthStateService
+@inject NavigationManager NavigationManager
 
 <h1 class="mt-5 mb-5">Crear Noticia</h1>
 <form @onsubmit="HandleSubmit" class="mb-5">
@@ -82,6 +85,7 @@
 
 
 
+
         private Dictionary<string, object> TinyMceConfig = new Dictionary<string, object>
             {
                 { "plugins", "advlist autolink lists link image charmap print preview anchor searchreplace visualblocks code fullscreen insertdatetime media table paste help wordcount" },
@@ -97,6 +101,11 @@
 
         protected override void OnInitialized()
         {
+            if (!AuthStateService.IsAuthenticated)
+                {
+                    Navigation.NavigateTo($"{AppSettingsService.Settings?.BaseFront}login", forceLoad: true);
+                    return;
+                }
             Categories = Enum.GetValues(typeof(NoticeCategory))
                 .Cast<NoticeCategory>()
                 .ToDictionary(
@@ -164,7 +173,7 @@
 
              try
     {
-        var response = await Http.PostAsync("EnFocoBACK/api/Notice", content);
+        var response = await Http.PostAsync("api/Notice", content);
         if (response.IsSuccessStatusCode)
         {
             await JSRuntime.InvokeVoidAsync("Swal.fire", "Éxito", "La noticia se ha guardado correctamente.", "success");

@@ -71,7 +71,7 @@
 
 
            
-            <img class="img-fluid img-thumbnail w-100 rounded-5" src="@($"{Configuration["EnFocoBACK"]}/{Notice.Img}")"
+            <img class="img-fluid img-thumbnail w-100 rounded-5" src="@($"{Configuration["EnFocoBACK"]}{Notice.Img}")"
                 alt="@Notice.Title">
 
             <div class="content-notice mt-3 position-relative">
@@ -118,7 +118,7 @@
         {
             @foreach (var relatedNotice in RelatedNotices.Where(n => n.Id != Id).Take(10))
             {
-                <a href="@($"{AppSettingsService.Settings?.BaseFront}/{relatedNotice.Id}")" class="list-group-item list-group-item-action p-2">
+                <a href="@($"{AppSettingsService.Settings?.BaseFront}{relatedNotice.Id}")" class="list-group-item list-group-item-action p-2">
                     <span class="list-group-item-text text-naranja">@relatedNotice.Issue</span>
                     <p class="list-group-item-heading fw-bold">@relatedNotice.Title</p>
                 </a>
@@ -269,7 +269,7 @@
             if (success)
             {
                 await JSRuntime.InvokeVoidAsync("SwalHelper.showSuccess", "La noticia ha sido eliminada.");
-               Navigation.NavigateTo($"{AppSettingsService.Settings?.BaseFront}/", forceLoad: true);
+               Navigation.NavigateTo($"{AppSettingsService.Settings?.BaseFront}", forceLoad: true);
             }
             else
             {
@@ -278,5 +278,5 @@
         }
 
 
-        private void NavigateToHome() =>  Navigation.NavigateTo($"{AppSettingsService.Settings?.BaseFront}/", forceLoad: true);
+        private void NavigateToHome() =>  Navigation.NavigateTo($"{AppSettingsService.Settings?.BaseFront}", forceLoad: true);
 }

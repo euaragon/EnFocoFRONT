@@ -1,6 +1,8 @@
-﻿@using Microsoft.AspNetCore.Components;
-@using Microsoft.AspNetCore.Components.Web;
-@using EnFocoFRONT.Services;
+﻿@using Microsoft.AspNetCore.Components
+@using Microsoft.AspNetCore.Components.Web
+@using EnFocoFRONT.Services
+@implements IDisposable
+
 @inject IAppSettingsService AppSettingsService
 @inject IAuthService AuthService
 @inject NavigationManager Navigation
@@ -9,81 +11,61 @@
 <header class="z-3">
     <nav class="navbar navbar-expand-sm navbar-toggleable-sm border-bottom shadow-sm p-3 align-items-center">
         <div class="container-fluid">
-            <a class="navbar-brand" href="@($"{AppSettingsService.Settings?.BaseFront}/")">
+            <a class="navbar-brand" href="@($"{AppSettingsService.Settings?.BaseFront}")">
                 <img class="w-75" src="img/logo.png" />
             </a>
             <button class="navbar-toggler" type="button">
                 <span class="navbar-toggler-icon">
-                    <svg xmlns="http://www.w3.org/2000/svg" x="0px" y="0px" width="20" height="20" viewBox="0 0 50 50"
-                        style="fill: #424642;">
-                        <path
-                            d="M 0 7.5 L 0 12.5 L 50 12.5 L 50 7.5 Z M 0 22.5 L 0 27.5 L 50 27.5 L 50 22.5 Z M 0 37.5 L 0 42.5 L 50 42.5 L 50 37.5 Z">
-                        </path>
+                    <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 50 50" style="fill: #424642;">
+                        <path d="M 0 7.5 L 0 12.5 L 50 12.5 L 50 7.5 Z M 0 22.5 L 0 27.5 L 50 27.5 L 50 22.5 Z M 0 37.5 L 0 42.5 L 50 42.5 L 50 37.5 Z"></path>
                     </svg>
                 </span>
             </button>
             <div class="navbar-collapse collapse d-sm-inline-flex gap-3">
                 <ul class="navbar-nav flex-grow-1 justify-content-end nav-gap align-items-center col gap-3">
                     <li class="nav-item">
-                        <a class="nav-link text-dark fs-6" href="@($"{AppSettingsService.Settings?.BaseFront}/")">INICIO</a>
+                        <a class="nav-link text-dark fs-6" href="@($"{AppSettingsService.Settings?.BaseFront}")">INICIO</a>
                     </li>
                     <li class="nav-item">
-                        <a class="nav-link text-dark fs-6" href="@($"{AppSettingsService.Settings?.BaseFront}/Editorial")">EDITORIAL</a>
+                        <a class="nav-link text-dark fs-6" href="@($"{AppSettingsService.Settings?.BaseFront}Editorial")">EDITORIAL</a>
                     </li>
                     <li class="nav-item">
-                        <a class="nav-link text-dark fs-6" href="@($"{AppSettingsService.Settings?.BaseFront}/Noticias")">NOTICIAS</a>
+                        <a class="nav-link text-dark fs-6" href="@($"{AppSettingsService.Settings?.BaseFront}Noticias")">NOTICIAS</a>
                     </li>
                     <li class="nav-item">
-                        <a class="nav-link text-dark fs-6" href="@($"{AppSettingsService.Settings?.BaseFront}/Analisis")">ANÁLISIS</a>
+                        <a class="nav-link text-dark fs-6" href="@($"{AppSettingsService.Settings?.BaseFront}Analisis")">ANÁLISIS</a>
                     </li>
 
-                    @if (IsUserAuthenticated)
+                    @if (AuthStateService.IsAuthenticated)
                     {
                         <li class="nav-item">
                             <button class="btn text-light bg-danger me-3 ms-3" @onclick="Logout">Cerrar Sesión</button>
                         </li>
                         <li class="nav-item me-2 p-3">
-                            <a href="@($"{AppSettingsService.Settings?.BaseFront}/crear-noticia")">
-                                <svg xmlns="http://www.w3.org/2000/svg" width="26" height="26" viewBox="0 0 20 20">
-                                    <g fill="currentColor">
-                                        <path
-                                            d="m5.433 13.917l1.262-3.155A4 4 0 0 1 7.58 9.42l6.92-6.918a2.121 2.121 0 0 1 3 3l-6.92 6.918c-.383.383-.84.685-1.343.886l-3.154 1.262a.5.5 0 0 1-.65-.65" />
-                                        <path
-                                            d="M3.5 5.75c0-.69.56-1.25 1.25-1.25H10A.75.75 0 0 0 10 3H4.75A2.75 2.75 0 0 0 2 5.75v9.5A2.75 2.75 0 0 0 4.75 18h9.5A2.75 2.75 0 0 0 17 15.25V10a.75.75 0 0 0-1.5 0v5.25c0 .69-.56 1.25-1.25 1.25h-9.5c-.69 0-1.25-.56-1.25-1.25z" />
-                                    </g>
-                                </svg>
+                            <a href="@($"{AppSettingsService.Settings?.BaseFront}crear-noticia")">
+                                <svg xmlns="http://www.w3.org/2000/svg" width="26" height="26" viewBox="0 0 24 24"><path fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 20h4L18.5 9.5a2.828 2.828 0 1 0-4-4L4 16zm9.5-13.5l4 4M16 19h6m-3-3v6" /></svg>
                             </a>
                         </li>
                         <li class="nav-item me-2 p-3">
-                            <a href="@($"{AppSettingsService.Settings?.BaseFront}/suscriptores")">
-                                <svg xmlns="http://www.w3.org/2000/svg" width="26" height="26" viewBox="0 0 32 32">
-                                    <path fill="none" stroke="currentColor" stroke-linecap="round"
-                                        stroke-linejoin="round" stroke-width="2"
-                                        d="M5 16v8c0 1.5 1.5 3 3 3h16c1.5 0 3-1.5 3-3v-8M5 16h5.5s1 3.5 5.5 3.5s5.5-3.5 5.5-3.5H27M5 16v3.5M5 16l1-5m21 5l-1-5M13.5 9h5m-5 4h5m-9 0V5h13v8" />
-                                </svg>
+                            <a href="@($"{AppSettingsService.Settings?.BaseFront}suscriptores")">
+                                <svg xmlns="http://www.w3.org/2000/svg" width="26" height="26" viewBox="0 0 32 32"><path fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 16v8c0 1.5 1.5 3 3 3h16c1.5 0 3-1.5 3-3v-8M5 16h5.5s1 3.5 5.5 3.5s5.5-3.5 5.5-3.5H27M5 16v3.5M5 16l1-5m21 5l-1-5M13.5 9h5m-5 4h5m-9 0V5h13v8" /></svg>
                             </a>
                         </li>
                     }
                     else
                     {
                         <li class="nav-item">
-                            <a class="nav-link me-3 ms-3 rounded-2" href="@($"{AppSettingsService.Settings?.BaseFront}/login")">
-                                <img width="26" height="26"
-                                    src="https://img.icons8.com/material/24/000000/user-male-circle--v1.png"
-                                    alt="user-male-circle--v1" />
+                            <a class="nav-link me-3 ms-3 rounded-2" href="@($"{AppSettingsService.Settings?.BaseFront}login")">
+                                <img width="26" height="26" src="https://img.icons8.com/material/24/000000/user-male-circle--v1.png" />
                             </a>
                         </li>
                     }
                 </ul>
 
                 <div class="d-flex" @onsubmit="Buscar">
-                    <input class="form-control me-2" type="search" placeholder="buscar..." @bind="searchTerm"
-                        @bind:event="oninput" @onkeypress="HandleKeyPress" />
+                    <input class="form-control me-2" type="search" placeholder="buscar..." @bind="searchTerm" @bind:event="oninput" @onkeypress="HandleKeyPress" />
                     <button class="btn rounded-2" type="submit">
-                        <svg xmlns="http://www.w3.org/2000/svg" width="26" height="26" viewBox="0 0 512 512">
-                            <path fill="currentColor"
-                                d="M414 354q-18-18-41-11l-32-32q43-53 43-119q0-80-56-136T192 0T56 56T0 192t56 136t136 56q70 0 119-43l32 32q-6 24 11 41l85 85q13 13 30 13q18 0 30-13q13-13 13-30t-13-30zm-222-13q-62 0-105.5-43.5T43 192T86.5 86.5T192 43t105.5 43.5T341 192t-43.5 105.5T192 341" />
-                        </svg>
+                        <!-- ícono de lupa -->
                     </button>
                 </div>
             </div>
@@ -106,13 +88,11 @@
 
     private void AuthStateChanged() => InvokeAsync(StateHasChanged);
 
-    private bool IsUserAuthenticated => AuthStateService.IsAuthenticated;
-
     private void Buscar()
     {
         if (!string.IsNullOrWhiteSpace(searchTerm))
         {
-            Navigation.NavigateTo($"{AppSettingsService.Settings?.BaseFront}/search?searchTerm={searchTerm}");
+            Navigation.NavigateTo($"{AppSettingsService.Settings?.BaseFront}search?searchTerm={searchTerm}");
         }
     }
 
@@ -127,7 +107,7 @@
     private async Task Logout()
     {
         await AuthService.Logout();
-        Navigation.NavigateTo($"{AppSettingsService.Settings?.BaseFront}/",  forceLoad: true);
+        Navigation.NavigateTo($"{AppSettingsService.Settings?.BaseFront}", forceLoad: true);
     }
 
     public void Dispose()

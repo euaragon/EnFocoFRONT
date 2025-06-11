@@ -23,7 +23,7 @@ namespace EnFocoFRONT.Services
 
         public async Task<bool> Login(LoginRequest loginModel)
         {
-            var result = await _httpClient.PostAsJsonAsync("EnFocoBACK/api/Auth/login", loginModel);
+            var result = await _httpClient.PostAsJsonAsync("api/Auth/login", loginModel);
 
             if (result.IsSuccessStatusCode)
             {

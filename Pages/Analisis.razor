@@ -30,10 +30,10 @@ else
     <div class="text-center notice-container pt-5">
         @foreach (var notice in Notices)
         {
-            <a href="@($"{AppSettingsService.Settings?.BaseFront}/{notice.Id}")" class="notice-link">
+            <a href="@($"{AppSettingsService.Settings?.BaseFront}{notice.Id}")" class="notice-link">
                 <article class="notice">
                     <div class="img-notice-container rounded-2">
-                        <img class="img-fluid w-100 rounded-2"src="@($"{Configuration["EnFocoBACK"]}/{notice.Img}")" alt="@notice.Title" />
+                        <img class="img-fluid w-100 rounded-2"src="@($"{Configuration["EnFocoBACK"]}{notice.Img}")" alt="@notice.Title" />
                     </div>
                     <div class="@GetNoticeClass((NoticeCategory)notice.Category) w-75 rounded-2">
                         <h5 class="text-naranja">@notice.Issue?.ToUpper()</h5>
@@ -76,11 +76,11 @@ else
 
         protected async Task LoadAnalisisNotices()
         {
-            string endpoint = $"{EnFocoBACK}/api/Notice";
+            string endpoint = $"{EnFocoBACK}api/Notice";
 
             if (!string.IsNullOrEmpty(SelectedCategory))
             {
-                endpoint = $"{EnFocoBACK}/api/Notice/section/{SelectedCategory}"; // Ajusta el endpoint si tu backend filtra por sección Y categoría
+                endpoint = $"{EnFocoBACK}api/Notice/section/{SelectedCategory}"; // Ajusta el endpoint si tu backend filtra por sección Y categoría
             }
 
             var result = await Http.GetFromJsonAsync<List<Notice>>(endpoint);
